@@ -30,6 +30,12 @@ Main Ideas:
 ## SQL
 - mySQL
 
+## Function
+- army
+- tech
+- food transport
+- export + import
+
 ## Game logic 
 - C++
 - AI
