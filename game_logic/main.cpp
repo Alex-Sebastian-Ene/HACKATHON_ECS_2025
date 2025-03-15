@@ -1,40 +1,47 @@
 #include "game_class.h"
+#include "event_manager.h"
 
 int main() {
+    EventManager::getInstance().start();
+
     Game tangDynastyGame;
-    
-    // Create a faction representing the Tang Empire
+
+    // Create factions
     Group tangEmpire("Tang Empire", 50000, 70);
-    
-    // Create specialized leaders
+    Group rebels("Rebel Faction", 15000, 50);
+
+    // Create leaders
     MilitaryLeader* general = new MilitaryLeader("Li Jing", 15, 85, 70, 90, 80);
-    IndustrialLeader* engineer = new IndustrialLeader("Yuwen Kai", 10, 70, 60, 80, 75);
-    ResearchLeader* scholar = new ResearchLeader("Xuanzang", 20, 90, 85, 95, 90);
-    EconomicLeader* merchant = new EconomicLeader("Lu Zhaolin", 12, 75, 65, 85, 80);
     PoliticalLeader* chancellor = new PoliticalLeader("Wei Zheng", 18, 80, 75, 88, 92);
-    
-    // Add leaders to the Tang Empire faction
+
+    // Add leaders
     tangEmpire.addLeader(general);
-    tangEmpire.addLeader(engineer);
-    tangEmpire.addLeader(scholar);
-    tangEmpire.addLeader(merchant);
-    tangEmpire.addLeader(chancellor);
+    rebels.addLeader(chancellor);
 
-    tangEmpire.features.alliances.addMember("Northern Alliance");
-    tangEmpire.land.groups.addMember("Silk Road Consortium");
-    
-    // Add faction to the game
+    // Add factions to the game
     tangDynastyGame.addFaction(tangEmpire);
-    
-    // Start the game simulation
-    tangDynastyGame.startGame();
-    
+    tangDynastyGame.addFaction(rebels);
 
+    // Subscribe to events
+    EventManager::getInstance().subscribe("GameStarted", [](int) {
+        std::cout << "🛡️ The Tang Dynasty begins its journey...\n";
+    });
+
+    EventManager::getInstance().subscribe("WarStarted", [](int) {
+        std::cout << "🔥 War has begun! Troops are mobilizing!\n";
+    });
+
+    // Start the game
+    tangDynastyGame.startGame();
+
+    // Simulate war
+    EventManager::getInstance().queueEvent("WarStarted", 1);
+
+    // Clean up
     delete general;
-    delete engineer;
-    delete scholar;
-    delete merchant;
     delete chancellor;
-    
+
+    EventManager::getInstance().stop();
+
     return 0;
 }

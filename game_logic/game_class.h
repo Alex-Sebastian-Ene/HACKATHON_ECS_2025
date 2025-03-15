@@ -120,97 +120,102 @@ public:
 // ----------------------
 // Features & Land Classes
 // ----------------------
-
 class Features {
-public:
-    int water_supply;
-    int food_supply;
-    int population;
-    int happiness;
-    int money;
-    int manpower;
-    int metal;
-    int wood;
-    int stone;
-    int food;
-    int water;
-    int technology;
-    int military_experience;
-    int unrest;
-    int morale;
-    int movement;
-    Leader leader;  // A default leader (can be replaced)
-    Groups alliances; // For alliances or affiliated groups
+    public:
+        int water_supply;
+        int food_supply;
+        int population;
+        int happiness;
+        int money;
+        int manpower;
+        int metal;
+        int wood;
+        int stone;
+        int food;
+        int water;
+        int technology;
+        int military_experience;
+        int unrest;
+        int morale;
+        int movement;
+        int mortality_rate;
+        int diseases_rate;
+        Leader leader;
+        Groups alliances;
+        
+        Features() : water_supply(100), food_supply(100), population(100),
+                     happiness(50), money(500), manpower(50),
+                     metal(50), wood(50), stone(50),
+                     food(100), water(100), technology(0),
+                     military_experience(0), unrest(0), morale(50),
+                     movement(0), mortality_rate(0), diseases_rate(0),
+                     leader("Default Leader", 0, 0, 0) {}
+    };
     
-    Features() : water_supply(100), food_supply(100), population(100),
-                 happiness(50), money(500), manpower(50),
-                 metal(50), wood(50), stone(50),
-                 food(100), water(100), technology(0),
-                 military_experience(0), unrest(0), morale(50),
-                 movement(0), leader("Default Leader", 0, 0, 0) {}
-};
-
-class Land {
-public:
-    int size;
-    int land_fertility;
-    int water;
-    int wood;
-    int stone;
-    int metal;
-    int food;
-    int population;
-    int technology;
-    Features features;
-    Groups groups;
-    
-    Land(int sz = 100, int fert = 50, int wat = 100, int wd = 50, int st = 50, int mt = 50, int fd = 100, int pop = 100, int tech = 0) 
-        : size(sz), land_fertility(fert), water(wat), wood(wd), stone(st), metal(mt),
-          food(fd), population(pop), technology(tech) {}
-};
-
+    class Land {
+    public:
+        int size;
+        int land_fertility;
+        int water_production;
+        int wood_production;
+        int stone_production;
+        int metal_production;
+        int food_production;
+        int flooding_rate;
+        bool drought;
+        
+        Land(int sz = 100, int fert = 50, int water = 100, int wood = 50, int stone = 50, int metal = 50, int food = 100)
+            : size(sz), land_fertility(fert), water_production(water), wood_production(wood), 
+              stone_production(stone), metal_production(metal), food_production(food), 
+              flooding_rate(10), drought(false) {}
+    };
+ 
 // ----------------------
 // Group Class: Combining Everything
 // ----------------------
 
 // Group class represents a faction with its own resources, territory, and leaders.
 class Group {
-public:
-    std::string group_name;
-    Features features;
-    Land land;
-    std::vector<Leader*> leaders; // List of specialized leaders
-
-    Group(std::string name, int landSize = 100, int fert = 50)
-        : group_name(name), land(landSize, fert) {}
-
-    void addLeader(Leader* leader) {
-        leaders.push_back(leader);
-    }
-
-    void showGroupDetails() {
-        std::cout << "=== Group: " << group_name << " ===\n";
-        std::cout << "Features:\n";
-        std::cout << "  Water Supply: " << features.water_supply << "\n";
-        std::cout << "  Food Supply: " << features.food_supply << "\n";
-        std::cout << "  Population: " << features.population << "\n";
-        std::cout << "Land:\n";
-        std::cout << "  Size: " << land.size << "\n";
-        std::cout << "  Fertility: " << land.land_fertility << "\n";
-        std::cout << "Leaders:\n";
-        for (auto leader : leaders) {
-            leader->showDetails();
-        }
-        std::cout << "===========================\n";
-    }
-};
-
-class City : public Group, public Features, public Land {
     public:
-    City(std::string name, int landSize = 100, int fert = 50)
-        : Group(name, landSize, fert) {}
-
-};
+        std::string group_name;
+        Land land;
+        std::vector<Leader*> leaders;
+        int money;
+        int military_power;
+        int stability;
+    
+        Group(std::string name, int landSize = 100, int fert = 50)
+            : group_name(name), land(landSize, fert), money(500), military_power(100), stability(80) {}
+    
+        void addLeader(Leader* leader) {
+            leaders.push_back(leader);
+        }
+    
+        void showGroupDetails() {
+            std::cout << "=== Group: " << group_name << " ===\n";
+            std::cout << "  Population: " << land.population << "\n";
+            std::cout << "  Money: " << money << "\n";
+            std::cout << "  Military Power: " << military_power << "\n";
+            std::cout << "  Stability: " << stability << "\n";
+            std::cout << "  Leaders:\n";
+            for (auto leader : leaders) {
+                leader->showDetails();
+            }
+            std::cout << "===========================\n";
+        }
+    
+        void checkEconomy() {
+            if (money <= 0) {
+                std::cout << "⚠️ Economic crisis in " << group_name << "! Trade policies must change!\n";
+            }
+        }
+    
+        void warDeclared() {
+            std::cout << "⚔️ War started involving " << group_name << "!\n";
+            military_power -= 10;
+        }
+    };
+    
 
 
 // ----------------------
