@@ -205,6 +205,14 @@ public:
     }
 };
 
+class City : public Group, public Features, public Land {
+    public:
+    City(std::string name, int landSize = 100, int fert = 50)
+        : Group(name, landSize, fert) {}
+
+};
+
+
 // ----------------------
 // Game Logic & Game Classes
 // ----------------------
