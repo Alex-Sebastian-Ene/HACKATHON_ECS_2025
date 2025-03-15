@@ -4,6 +4,8 @@ Main Ideas:
 
 - Water supply
 - Food supply
+- stone
+- research skill
 - Population
 - Technological advancments
 - Man power (army)
