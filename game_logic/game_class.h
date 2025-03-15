@@ -117,13 +117,12 @@ public:
     }
 };
 
+
 // ----------------------
 // Features & Land Classes
 // ----------------------
 class Features {
     public:
-        int water_supply;
-        int food_supply;
         int population;
         int happiness;
         int money;
@@ -143,7 +142,7 @@ class Features {
         Leader leader;
         Groups alliances;
         
-        Features() : water_supply(100), food_supply(100), population(100),
+        Features() : population(100),
                      happiness(50), money(500), manpower(50),
                      metal(50), wood(50), stone(50),
                      food(100), water(100), technology(0),
@@ -152,22 +151,72 @@ class Features {
                      leader("Default Leader", 0, 0, 0) {}
     };
     
-    class Land {
+class Land {
+public:
+    int size;
+    int land_fertility;
+    int water_production;
+    int wood_production;
+    int stone_production;
+    int metal_production;
+    int food_production;
+    int flooding_rate;
+    bool drought;
+    
+    Land(int sz = 100, int fert = 50, int water = 100, int wood = 50, int stone = 50, int metal = 50, int food = 100)
+        : size(sz), land_fertility(fert), water_production(water), wood_production(wood), 
+            stone_production(stone), metal_production(metal), food_production(food), 
+            flooding_rate(10), drought(false) {}
+};
+
+// ----------------------
+// City Class
+// ----------------------
+// A City inherits from Features and Land so it carries both internal
+// properties and geographical data. It can also be extended with event handling.
+class City : public Features, public Land {
     public:
-        int size;
-        int land_fertility;
-        int water_production;
-        int wood_production;
-        int stone_production;
-        int metal_production;
-        int food_production;
-        int flooding_rate;
-        bool drought;
+        std::string cityName;   // Name of the city
         
-        Land(int sz = 100, int fert = 50, int water = 100, int wood = 50, int stone = 50, int metal = 50, int food = 100)
-            : size(sz), land_fertility(fert), water_production(water), wood_production(wood), 
-              stone_production(stone), metal_production(metal), food_production(food), 
-              flooding_rate(10), drought(false) {}
+        // Constructor initializes the Land portion and sets the city name.
+        City(const std::string& name, int landSize = 100, int fert = 50, int water = 100, int wood = 50, 
+             int stone = 50, int metal = 50, int food = 100)
+            : Land(landSize, fert, water, wood, stone, metal, food), cityName(name) {}
+        
+        void showDetails() {
+            std::cout << "City: " << cityName << "\n";
+            std::cout << "Population: " << population << "\n";
+            std::cout << "Water Supply: " << water << "\n";
+            std::cout << "Food Supply: " << food << "\n";
+            std::cout << "Land Size: " << size << "\n";
+            std::cout << "Land Fertility: " << land_fertility << "\n";
+            std::cout << "Leader: " << leader.name << "\n";
+        }
+    };
+    
+// A Country aggregates multiple cities and has its own leader.
+class Country {
+    public:
+        std::string countryName;         // Name of the country
+        std::vector<City*> cities;         // List of cities in the country
+        Leader leader;                   // Country's leader
+        
+        Country(const std::string& name, const Leader& ldr = Leader("Country Leader", 10, 10, 10))
+            : countryName(name), leader(ldr) {}
+        
+        void addCity(City* city) {
+            cities.push_back(city);
+        }
+        
+        void showDetails() {
+            std::cout << "Country: " << countryName << "\n";
+            std::cout << "Leader: " << leader.name << "\n";
+            std::cout << "Number of Cities: " << cities.size() << "\n";
+            for (auto city : cities) {
+                std::cout << "-----------------------\n";
+                city->showDetails();
+            }
+        }
     };
  
 // ----------------------
@@ -179,6 +228,7 @@ class Group {
     public:
         std::string group_name;
         Land land;
+        Features features;
         std::vector<Leader*> leaders;
         int money;
         int military_power;
@@ -193,7 +243,7 @@ class Group {
     
         void showGroupDetails() {
             std::cout << "=== Group: " << group_name << " ===\n";
-            std::cout << "  Population: " << land.population << "\n";
+            std::cout << "  Population: " << features.population << "\n";
             std::cout << "  Money: " << money << "\n";
             std::cout << "  Military Power: " << military_power << "\n";
             std::cout << "  Stability: " << stability << "\n";

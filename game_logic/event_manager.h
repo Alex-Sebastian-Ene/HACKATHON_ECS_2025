@@ -1,7 +1,6 @@
 #ifndef EVENTMANAGER_H
 #define EVENTMANAGER_H
-
-#include <iostream>
+#include <iostream> 
 #include <functional>
 #include <unordered_map>
 #include <vector>
