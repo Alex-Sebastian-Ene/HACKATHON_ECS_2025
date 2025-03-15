@@ -1,5 +1,6 @@
 #ifndef TECHNOLOGY_TREE_H
 #define TECHNOLOGY_TREE_H
+
 #include <string>
 #include <vector>
 #include <unordered_map>
