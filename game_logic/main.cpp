@@ -1,8 +1,10 @@
-#include "game_class.h"
-#include "event_manager.h"
+#include "game_world.h"
 #include "economic_growth.h"
 #include "population_growth.h"
-#include "militaryexperience.h"
+#include "societal_conditions.h"
+#include "military_tactics.h"
+#include "event_manager.h"
+#include <iostream>
 #include <thread>
 #include <chrono>
 
@@ -11,83 +13,77 @@ int main() {
     EventManager::getInstance().start();
 
     // -------------------------------
-    // Simulation: Economic & Population
+    // Economic & Population Simulations
     // -------------------------------
-    // Create simulation objects (simulate 365 days)
-        EconomySimulation economySim(365, 100000, 1000000, 900000);
-        PopulationSimulation populationSim(365, 100000, 1000000, 900000);
-    
-    // Run both simulations.
+    EconomySimulation economySim(365, 100000, 1000000, 900000);
+    PopulationSimulation populationSim(365, 100000, 1000000, 900000);
+
     economySim.run();
     populationSim.run();
-    
-    // Synchronize key variables between the simulations.
+
+    // Synchronize key values.
     double finalPopulation = populationSim.getCurrentPopulation();
     economySim.updatePopulation(finalPopulation);
     double finalEconomy = economySim.getCurrentEconomy();
     populationSim.updateEconomy(finalEconomy);
-    
-    // Output summaries (first 50 days).
-    std::cout << "Economic Summary:\n";
+
+    std::cout << "Economic Summary (first 50 days):\n";
     economySim.printSummary(50);
-    std::cout << "\nPopulation Summary:\n";
+    std::cout << "\nPopulation Summary (first 50 days):\n";
     populationSim.printSummary(50);
-    
+
     // -------------------------------
-    // Testing Military Strength Module
+    // Game World Setup
     // -------------------------------
-    MilitaryStrength milStr;
-    // Set some test values.
-    milStr.last_day_since_war = 15;
-    milStr.wars_fought = 5;
-    milStr.wars_won = 3;
-    milStr.wars_lost = 2;
-    milStr.military_experience = 50;
-    milStr.military_power = 200;
-    milStr.military_technology = 30;
-    
-    std::cout << "\nMilitary Strength Summary:\n";
-    milStr.printSummary();
-    std::cout << "Calculated Readiness: " << milStr.calculateReadiness() << "\n";
-    
+    GameWorld world;
+
     // -------------------------------
-    // Testing Game Simulation
+    // Update Societal Conditions Daily for Tang Cities
     // -------------------------------
-    Game game;
-    
-    // Create two factions with leaders.
-    Group faction1("Red Faction");
-    faction1.addLeader(new MilitaryLeader("General Red", 20, 15, 100, 25, 30));
-    faction1.addLeader(new EconomicLeader("Trader Red", 15, 10, 80, 20, 25));
-    
-    Group faction2("Blue Faction");
-    faction2.addLeader(new ResearchLeader("Scientist Blue", 10, 12, 70, 40, 35));
-    faction2.addLeader(new PoliticalLeader("Diplomat Blue", 18, 14, 90, 30, 20));
-    
-    // Add factions to the game.
-    game.addFaction(faction1);
-    game.addFaction(faction2);
-    
-    // Start the game simulation.
-    std::cout << "\nGame Simulation:\n";
-    game.startGame();
-    
+    SocietalConditions societal;
+    std::cout << "\nUpdating Societal Conditions for Tang Cities:\n";
+    for (int day = 1; day <= 10; ++day) {
+        std::cout << "Day " << day << ":\n";
+        for (City* city : world.tang.cities) {
+            // Update morale and unrest based on other metrics plus random noise.
+            societal.updateDaily(*city);
+            std::cout << city->cityName << " - Morale: " << city->morale 
+                      << ", Unrest: " << city->unrest << "\n";
+        }
+        std::cout << "\n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
     // -------------------------------
-    // Testing Event Manager - Simple Event
+    // Simulate a Military Attack
     // -------------------------------
-    // Subscribe to a test event.
-    EventManager::getInstance().subscribe("TestEvent", [](int value){
+    MilitaryTactics tactics;
+    // Find the major city "Shanzhou" within Tang.
+    City* shanzhou = nullptr;
+    for (City* city : world.tang.cities) {
+        if (city->cityName == "Shanzhou") {
+            shanzhou = city;
+            break;
+        }
+    }
+    if (shanzhou) {
+        std::cout << "\nSimulating attack on Shanzhou by Tujue:\n";
+        // Assume Tujue sends 30,000 troops; use 80 for attacker morale and current city's morale for defenders.
+        bool captured = tactics.attackCity(world.tujue, world.tang, *shanzhou, 30000, shanzhou->army_size, 80.0, shanzhou->morale);
+        std::cout << "Attack result: " << (captured ? "Shanzhou captured!" : "Shanzhou defended!") << "\n";
+    }
+
+    // -------------------------------
+    // Test Event Manager with a Sample Event
+    // -------------------------------
+    EventManager::getInstance().subscribe("TestEvent", [](int value) {
          std::cout << "TestEvent triggered with value: " << value << "\n";
     });
-    
-    // Queue an event.
     EventManager::getInstance().queueEvent("TestEvent", 42);
-    
-    // Give a brief pause for event processing.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     // Stop the Event Manager.
     EventManager::getInstance().stop();
-    
+
     return 0;
 }

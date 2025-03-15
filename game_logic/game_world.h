@@ -15,8 +15,6 @@ public:
     // Constructor initializes the world.
     GameWorld();
 
-    // Display details of all countries.
-    void showWorldDetails() const;
 
     // Destructor to clean up dynamic memory.
     ~GameWorld();
