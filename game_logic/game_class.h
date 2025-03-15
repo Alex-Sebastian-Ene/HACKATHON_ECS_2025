@@ -177,6 +177,7 @@ public:
 class City : public Features, public Land {
     public:
         std::string cityName;   // Name of the city
+        int army_size;          // Number of soldiers in the city
         
         // Constructor initializes the Land portion and sets the city name.
         City(const std::string& name, int landSize = 100, int fert = 50, int water = 100, int wood = 50, 
