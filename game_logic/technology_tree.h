@@ -55,4 +55,6 @@ public:
     void applyBonuses(Features &features);
 };
 
+TechnologyTree* createTechnologyTree(int initialPoints = 1000);
+
 #endif // TECHNOLOGY_TREE_H

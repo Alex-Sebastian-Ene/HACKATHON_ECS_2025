@@ -1,89 +1,72 @@
+// competition_env.cpp
 #include "game_world.h"
 #include "economic_growth.h"
 #include "population_growth.h"
-#include "societal_conditions.h"
 #include "military_tactics.h"
-#include "event_manager.h"
+#include "societal_conditions.h"
 #include <iostream>
-#include <thread>
-#include <chrono>
+#include <fstream>
 
 int main() {
-    // Start the Event Manager thread.
-    EventManager::getInstance().start();
-
-    // -------------------------------
-    // Economic & Population Simulations
-    // -------------------------------
-    EconomySimulation economySim(365, 100000, 1000000, 900000);
-    PopulationSimulation populationSim(365, 100000, 1000000, 900000);
-
-    economySim.run();
-    populationSim.run();
-
-    // Synchronize key values.
-    double finalPopulation = populationSim.getCurrentPopulation();
-    economySim.updatePopulation(finalPopulation);
-    double finalEconomy = economySim.getCurrentEconomy();
-    populationSim.updateEconomy(finalEconomy);
-
-    std::cout << "Economic Summary (first 50 days):\n";
-    economySim.printSummary(50);
-    std::cout << "\nPopulation Summary (first 50 days):\n";
-    populationSim.printSummary(50);
-
-    // -------------------------------
-    // Game World Setup
-    // -------------------------------
     GameWorld world;
 
-    // -------------------------------
-    // Update Societal Conditions Daily for Tang Cities
-    // -------------------------------
-    SocietalConditions societal;
-    std::cout << "\nUpdating Societal Conditions for Tang Cities:\n";
-    for (int day = 1; day <= 10; ++day) {
-        std::cout << "Day " << day << ":\n";
-        for (City* city : world.tang.cities) {
-            // Update morale and unrest based on other metrics plus random noise.
-            societal.updateDaily(*city);
-            std::cout << city->cityName << " - Morale: " << city->morale 
-                      << ", Unrest: " << city->unrest << "\n";
-        }
-        std::cout << "\n";
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
+    City* capitalTang = world.tang.cities[0];
+    City* capitalTujue = world.tujue.cities[0];
+    City* capitalTubo = world.tubo.cities[0];
 
-    // -------------------------------
-    // Simulate a Military Attack
-    // -------------------------------
+    capitalTang->money = 5000;
+    capitalTang->population = 200000;
+    capitalTang->military_experience = 100;
+
+    capitalTujue->money = 5000;
+    capitalTujue->population = 200000;
+    capitalTujue->military_experience = 100;
+
+    capitalTubo->money = 5000;
+    capitalTubo->population = 200000;
+    capitalTubo->military_experience = 100;
+
+    EconomySimulation econSimTang(365, capitalTang->money, 1000000, 900000);
+    PopulationSimulation popSimTang(365, capitalTang->population, 1000000, 900000);
+
     MilitaryTactics tactics;
-    // Find the major city "Shanzhou" within Tang.
-    City* shanzhou = nullptr;
-    for (City* city : world.tang.cities) {
-        if (city->cityName == "Shanzhou") {
-            shanzhou = city;
-            break;
+    SocietalConditions societal;
+
+    std::ofstream outFile("simulation_data.csv");
+    outFile << "day,money,population,military_experience\n";
+
+    for (int day = 1; day <= 10; ++day) {
+        econSimTang.updateEconomy();
+        popSimTang.run();
+
+        capitalTang->money += 50 * 0.3;  
+        capitalTang->population += 20 * 0.4; 
+        capitalTang->military_experience += 30 * 0.3;
+
+        bool battleResult = tactics.attackCity(
+            *world.tujue.cities[0], world.tang, *capitalTang,
+            30000, capitalTang->army_size, 80.0, capitalTang->morale
+        );
+
+        if (battleResult) {
+            capitalTang->military_experience += 10;
+        } else {
+            capitalTang->military_experience -= 5;
         }
-    }
-    if (shanzhou) {
-        std::cout << "\nSimulating attack on Shanzhou by Tujue:\n";
-        // Assume Tujue sends 30,000 troops; use 80 for attacker morale and current city's morale for defenders.
-        bool captured = tactics.attackCity(world.tujue, world.tang, *shanzhou, 30000, shanzhou->army_size, 80.0, shanzhou->morale);
-        std::cout << "Attack result: " << (captured ? "Shanzhou captured!" : "Shanzhou defended!") << "\n";
+
+        for (City* city : world.tang.cities) {
+            societal.updateDaily(*city);
+        }
+
+        outFile << day << "," << capitalTang->money << "," 
+                << capitalTang->population << "," 
+                << capitalTang->military_experience << "\n";
+
+        std::cout << "Day " << day << " - Tang Metrics: Money: " << capitalTang->money
+                  << ", Population: " << capitalTang->population
+                  << ", Military Exp: " << capitalTang->military_experience << "\n";
     }
 
-    // -------------------------------
-    // Test Event Manager with a Sample Event
-    // -------------------------------
-    EventManager::getInstance().subscribe("TestEvent", [](int value) {
-         std::cout << "TestEvent triggered with value: " << value << "\n";
-    });
-    EventManager::getInstance().queueEvent("TestEvent", 42);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    
-    // Stop the Event Manager.
-    EventManager::getInstance().stop();
-
+    outFile.close();
     return 0;
 }
