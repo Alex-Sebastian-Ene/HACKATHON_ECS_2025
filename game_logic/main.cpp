@@ -1,17 +1,20 @@
-#include "game_world.h"
-#include "economic_growth.h"      // Make sure updateEconomy() is public!
-#include "population_growth.h"
-#include "military_tactics.h"
-#include "societal_conditions.h"
-
-// Enemy aggression helper (defined in enemy_attack.cpp)
-void checkEnemyAggression(Country &enemy, Country &tang);
-
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
 #include <ctime>
 #include <vector>
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+#include "game_world.h"
+#include "economic_growth.h"      // Make sure updateEconomy() is public!
+#include "population_growth.h"
+#include "military_tactics.h"
+#include "societal_conditions.h"
+#include "negotation.h"          // Include the negotiation module
+#include "game_class.h"          // Contains Features, City, Country, etc.
+
+// Enemy aggression helper (defined in enemy_attack.cpp)
+void checkEnemyAggression(Country &enemy, Country &tang);
 
 void printTangCities(const Country &tang) {
     std::cout << "Current Tang Cities:\n";
@@ -19,6 +22,8 @@ void printTangCities(const Country &tang) {
         std::cout << " - " << city->cityName 
                   << " | Population: " << city->population 
                   << " | Money: " << city->money
+                  << " | Food: " << city->food
+                  << " | Water: " << city->water
                   << " | Rebellious: " << (city->isRebelling ? "YES" : "NO") 
                   << "\n";
     }
@@ -26,6 +31,32 @@ void printTangCities(const Country &tang) {
 }
 
 int main() {
+    // Fetch JSON from the server.
+    auto r = cpr::Get(cpr::Url{"http://localhost:3000/api/cities"});
+    if (r.status_code == 200) {
+        try {
+            nlohmann::json jsonData = nlohmann::json::parse(r.text);
+            std::cout << "Fetched JSON:\n" << jsonData.dump(4) << "\n";
+            // Example: iterate through countries and print details.
+            for (const auto& country : jsonData["countries"]) {
+                std::cout << "Country: " << country["name"] << "\n";
+                std::cout << " Leader: " << country["leader"]["name"] << "\n";
+                for (const auto& city : country["cities"]) {
+                    std::cout << "  City: " << city["cityName"] << "\n";
+                    std::cout << "   Population: " << city["population"] << "\n";
+                    std::cout << "   Army Size: " << city["army_size"] << "\n";
+                    std::cout << "   Money: " << city["money"] << "\n";
+                    std::cout << "   Rebellion: " << (city["isRebelling"].get<bool>() ? "YES" : "NO") << "\n";
+                }
+                std::cout << "\n";
+            }
+        } catch(const std::exception &ex) {
+            std::cerr << "JSON parsing error: " << ex.what() << "\n";
+        }
+    } else {
+        std::cerr << "Failed to fetch JSON. Status code: " << r.status_code << "\n";
+    }
+
     // Seed rand() for any functions that use it.
     srand(static_cast<unsigned int>(time(nullptr)));
 
@@ -41,17 +72,23 @@ int main() {
     capitalTang->money = 5000;
     capitalTang->population = 200000;
     capitalTang->military_experience = 100;
+    // Also set game features like food and water (from game_class.h).
+    capitalTang->food = 100;
+    capitalTang->water = 100;
 
     capitalTujue->money = 5000;
     capitalTujue->population = 200000;
     capitalTujue->military_experience = 100;
+    capitalTujue->food = 100;
+    capitalTujue->water = 100;
 
     capitalTubo->money = 5000;
     capitalTubo->population = 200000;
     capitalTubo->military_experience = 100;
+    capitalTubo->food = 100;
+    capitalTubo->water = 100;
 
     // Create simulation objects for Tang.
-    // (Parameters: days, starting money/population, carrying capacity, food supply)
     EconomySimulation econSimTang(365, capitalTang->money, 1000000, 900000);
     PopulationSimulation popSimTang(365, capitalTang->population, 1000000, 900000);
 
@@ -62,7 +99,7 @@ int main() {
     outFile << "day,tang_capital_money,tang_capital_population,tang_capital_military_experience\n";
 
     // Main daily update loop.
-    for (int day = 1; day <= 10; ++day) {
+    for (int day = 1; day <= 30; ++day) {
         std::cout << "========================\n";
         std::cout << "Day " << day << " update:\n";
 
@@ -89,6 +126,14 @@ int main() {
         checkEnemyAggression(world.tujue, world.tang);
         checkEnemyAggression(world.tubo, world.tang);
 
+        // Every 10th day, attempt a negotiation instead of a direct attack.
+        if (day % 10 == 0) {
+            std::cout << "Day " << day << ": Attempting negotiation from Tujue against Tang's capital.\n";
+            Negotiation::attemptAttackOrNegotiate(world.tujue, world.tang, *capitalTang, 
+                                                    capitalTujue->army_size, capitalTang->army_size,
+                                                    capitalTujue->morale, capitalTang->morale);
+        }
+
         // Distribute the country's economic outcome among Tang's cities.
         double totalPopulation = 0;
         for (City* city : world.tang.cities)
@@ -108,9 +153,11 @@ int main() {
         std::cout << "Day " << day << " - Tang Capital Metrics:\n"
                   << "  Money: " << capitalTang->money << "\n"
                   << "  Population: " << capitalTang->population << "\n"
-                  << "  Military Exp: " << capitalTang->military_experience << "\n";
+                  << "  Military Exp: " << capitalTang->military_experience << "\n"
+                  << "  Food: " << capitalTang->food << "\n"
+                  << "  Water: " << capitalTang->water << "\n";
 
-        // Also print the current list of Tang cities.
+        // Also print the current list of Tang cities with full features.
         printTangCities(world.tang);
     }
 

@@ -8,7 +8,7 @@
 // ----------------------
 // Groups Class: For alliances and affiliations
 // ----------------------
-class Groups {
+class Groups{
 public:
     std::vector<std::string> members;
     void addMember(const std::string& member) {
@@ -200,12 +200,12 @@ class City : public Features, public Land {
 
     bool checkRebellion() {
         double riskPercent = 0.0;
-        if (mortality_rate > 1.8)
-            riskPercent += 40.0;
-        if (happiness < 5)
-            riskPercent += 40.0;
+        if (mortality_rate > 2.1)
+            riskPercent += 30.0;
+        if (happiness < 50)
+            riskPercent += 30.0;
         if (money < 5200)
-            riskPercent += 40.0;
+            riskPercent += 30.0;
         
         // Add a random fluctuation between -10% and +10%.
         int randomFluctuation = rand() % 21;  // yields value in [0, 20]
