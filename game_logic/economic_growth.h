@@ -26,7 +26,8 @@ public:
     void printSummary(int numDays);
     void updatePopulation(double newPopulation);
     double getCurrentEconomy() const;
-
+    void updateEconomy();
+    
 private:
     double foodProduction, woodProduction, stoneProduction, metalProduction;
     double consumptionRate, taxRate, productionTaxRate, expenditureRate;
@@ -37,7 +38,7 @@ private:
     std::vector<EconomicData> history;
     std::mt19937 rng;
     double randomDouble();
-    void updateEconomy();
+
 };
 
 #endif // ECONOMIC_GROWTH_H

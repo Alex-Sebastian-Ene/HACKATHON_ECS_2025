@@ -174,26 +174,57 @@ public:
 // ----------------------
 // A City inherits from Features and Land so it carries both internal
 // properties and geographical data. It can also be extended with event handling.
+// In your game_class.h, add a method to the City class:
+// In game_class.h, update the City class:
 class City : public Features, public Land {
     public:
-        std::string cityName;   // Name of the city
-        int army_size;          // Number of soldiers in the city
-        
-        // Constructor initializes the Land portion and sets the city name.
+        std::string cityName;
+        int army_size;
+        bool isRebelling; // flag to indicate if the city has rebelled
+    
         City(const std::string& name, int landSize = 100, int fert = 50, int water = 100, int wood = 50, 
              int stone = 50, int metal = 50, int food = 100)
-            : Land(landSize, fert, water, wood, stone, metal, food), cityName(name) {}
-        
+            : Land(landSize, fert, water, wood, stone, metal, food),
+              cityName(name), isRebelling(false) {}
+    
         void showDetails() {
-            std::cout << "City: " << cityName << "\n";
-            std::cout << "Population: " << population << "\n";
-            std::cout << "Water Supply: " << water << "\n";
-            std::cout << "Food Supply: " << food << "\n";
-            std::cout << "Land Size: " << size << "\n";
-            std::cout << "Land Fertility: " << land_fertility << "\n";
-            std::cout << "Leader: " << leader.name << "\n";
+            std::cout << "City: " << cityName << "\n"
+                      << "Population: " << population << "\n"
+                      << "Water Supply: " << water << "\n"
+                      << "Food Supply: " << food << "\n"
+                      << "Land Size: " << size << "\n"
+                      << "Land Fertility: " << land_fertility << "\n"
+                      << "Leader: " << leader.name << "\n";
         }
+        
+
+    bool checkRebellion() {
+        double riskPercent = 0.0;
+        if (mortality_rate > 1.8)
+            riskPercent += 40.0;
+        if (happiness < 5)
+            riskPercent += 40.0;
+        if (money < 5200)
+            riskPercent += 40.0;
+        
+        // Add a random fluctuation between -10% and +10%.
+        int randomFluctuation = rand() % 21;  // yields value in [0, 20]
+        riskPercent += randomFluctuation;
+        
+        std::cout << cityName << " risk percentage (with randomness): " << riskPercent << "%\n";
+        
+        // Generate a random threshold between 50 and 100.
+        int threshold = rand() % 70;  // random int from 50 to 100
+        std::cout << "Random threshold for rebellion: " << threshold << "%\n";
+        
+        return riskPercent > threshold;
+    }
+    
+        // Declaration only—implementation will be provided in a separate source file.
+        void wageWarOnPlayer(class Country &playerCountry);
     };
+    
+    
     
 // A Country aggregates multiple cities and has its own leader.
 class Country {
